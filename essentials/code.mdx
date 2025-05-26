@@ -1,37 +1,86 @@
 ---
-title: "Code Blocks"
-description: "Display inline code and code blocks"
-icon: "code"
+title: "Working with Entities"
+description: "Built-in CLI for managing your project."
 ---
 
-## Basic
+Working with Entities
 
-### Inline Code
+Add a DbSet for Each of Your Models
+In order for Entity Framework Core to track and manage your models as database tables, you must declare a DbSet`<TEntity>`for each entity in your ApplicationDbContext class. Without this declaration, EF Core will not include the entity in the database schema during migrations, and the table will not be created.
 
-To denote a `word` or `phrase` as code, enclose it in backticks (\`).
+```csharp title="Data / ApplicationDbContext.cs"
 
-```
-To denote a `word` or `phrase` as code, enclose it in backticks (`).
-```
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+    {
+        public DbSet<Address> Addresses { get; set; }
+        public DbSet<Article> Articles { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Treatment> Treatments { get; set; }
+        public DbSet<TreatmentArticle> TreatmentArticles { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<Appointment> Appointments { get; set; } 
 
-### Start
-
-Use [fenced code blocks](https://www.markdownguide.org/extended-syntax/#fenced-code-blocks) by enclosing code in three backticks and follow the leading ticks with the programming language of your snippet to get syntax highlighting. Optionally, you can also write the name of your code after the programming language.
-
-```aspnet HelloWorld.java
-class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }
 ```
 
-````md
-```java HelloWorld.java
-class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
+When you override the OnModelCreating method in your ApplicationDbContext, it's crucial to call base.OnModelCreating(modelBuilder); to ensure that Entity Framework Core (EF Core) applies the default configurations and conventions.
+This is particularly important when using ASP.NET Core Identity, as the base IdentityDbContext class configures the schema for Identity-related entities like IdentityUser, IdentityRole, and others.
+
+Failing to call the base method can lead to issues such as missing primary keys or improperly configured relationships in your Identity tables. For instance, you might encounter errors like:
+
+<blockquote>
+  <a href="https://github.com/dotnet/aspnetcore/issues/52314?utm_source=chatgpt.com">
+    The entity type 'IdentityUserLogin' requires a primary key to be defined.
+  </a>
+</blockquote>
+
+This occurs because the necessary configurations provided by the base class are not applied.
+
+## ModelBuilder
+
+While DbSet declarations are necessary for EF Core to track your entities, they don't fully define the relationships between those entities.
+To ensure that EF Core correctly understands and configures the relationships, especially in cases that deviate from its conventions, you should use the Fluent API in OnModelCreating.
+
+```cs title="Data / ApplicationDbContext.cs"
+
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+    {
+        public DbSet<Address> Addresses { get; set; }
+        public DbSet<Article> Articles { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Treatment> Treatments { get; set; }
+        public DbSet<TreatmentArticle> TreatmentArticles { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<Appointment> Appointments { get; set; } 
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+        //1:1
+        modelBuilder.Entity<User>()
+        .HasOne(u => u.Profile)
+        .WithOne(p => p.User)
+        .HasForeignKey<UserProfile>(p => p.UserId);
+
+        //1:N
+           modelBuilder.Entity<BlogPost>()
+        .HasMany(p => p.Comments)
+        .WithOne(c => c.BlogPost)
+        .HasForeignKey(c => c.BlogPostId);
+
+        //N:M
+         modelBuilder.Entity<Student>()
+        .HasMany(s => s.Courses)
+        .WithMany(c => c.Students)
+        .UsingEntity(j => j.ToTable("StudentCourses"));
+
+        }
     }
 }
 ```
-````
