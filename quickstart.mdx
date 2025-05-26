@@ -1,6 +1,6 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in under 5 minutes"
+title: "Quickstart (Sample App)"
+description: "Start building awesome an Awesome CRUD App in Blazor!"
 ---
 
 <Steps>
@@ -31,9 +31,86 @@ description: "Start building awesome documentation in under 5 minutes"
      
     </Info>
   </Step>
+  <Step title="New Step">
+    - **SQL Server Express First**: By installing SQL Server Express first, you ensure that the database engine is set up and ready to go. This is the core service that SSMS will connect to and manage.
+
+      ![1_nz7qib\_-krOhvcmcTkQaVA.webp](/images/1_nz7qib_-krOhvcmcTkQaVA.webp)
+    - **SSMS (the Setup) After**: Once SQL Server Express is installed, you can then install SSMS. SSMS will detect the SQL Server Express instance during installation, making it easier to connect to and manage your databases right away.
+
+      ![1_8rfebHAe1KTiSgBuEi1pKw.webp](/images/1_8rfebHAe1KTiSgBuEi1pKw.webp)
+
+      # Install Visual Studio
+      - Make sure to start the setup normally from the Visual Studio Folder.
+      - Choose C#-related Workloads.
+      - Let the Installer install:
+      - After the base installation is finished (Restart the Pc if needed)
+      - You should at least close your Studio once, and start the Installer again — if .NET 8 is installed correctly an Update-Button will show up:
+
+        ![1_Tc_UIiu2dengCXCcRTMSeQ.webp](/images/1_Tc_UIiu2dengCXCcRTMSeQ.webp)
+
+        ![1_Xmw_KWmDfpWsqCleHQaM3g.webp](/images/1_Xmw_KWmDfpWsqCleHQaM3g.webp)
+  </Step>
+  <Step title="Fitting Template">
+    # App with more complex relations
+
+    For the most modern Template, use the Blazor Web App Template:
+
+    **Very important\!** select **Individual Accounts**, to have an secure authentication system from the startup without any extra work.
+
+    Very Important\! select RenderMode Server \!
+
+    Another Thing to do right in the beginning is to adjust the Connection String
+
+    ![1_6HsMEtPK--yx92_QXGZd7g.webp](/images/1_6HsMEtPK--yx92_QXGZd7g.webp)
+  </Step>
+  <Step title="JsonSettings">
+    Before you begin coding, make sure to enable Detailed Errors. While you shouldn’t encounter too many issues, it’s important that any errors that do occur are as detailed as possible. You can do this in your **.json** File.
+
+    ![1_jvdS3nPaL9rfBRCpRUvbKA.webp](/images/1_jvdS3nPaL9rfBRCpRUvbKA.webp)
+
+    ```json appsettings.json [expandable]
+      "DetailedErrors": true, // turns on CircuitOptions.DetailedErrors
+    ```
+
+    Another Thing to do right in the beginning is to adjust the Connection String
+
+    If you are using SQL-Server Express you can this:
+
+    Before the first “\\\\” you need to use the exact Name of the Server that you can find here:
+
+    ![1_uc0WfTdjke5ktKOrGNHsXQ.webp](/images/1_uc0WfTdjke5ktKOrGNHsXQ.webp)
+
+    _<Tooltip tip="">in this example localdb but not always\!</Tooltip>_
+
+    ```json
+        "DefaultConnection": "Server=DESKTOP-C6JNJAT\\SQLEXPRESS;Database=DoctorManagement;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;"
+    ```
+
+    otherwise you can just keep the **localdb** and add local db in your Management studio like this:
+
+    ```json
+     "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=aspnet-ExampleSetup-0fed3dee-74be-4830-a1b7-	e7b8dc7511c0;Trusted_Connection=True;MultipleActiveResultSets=true"
+    ```
+
+    You can also just use the integrated SQL Server Object Explorer to manipulate Values in the Database.
+
+    ![1_QQu6DJR2ZcH7T39VZsLDeQ.webp](/images/1_QQu6DJR2ZcH7T39VZsLDeQ.webp)
+  </Step>
+  <Step title="Create Models">
+    ![1_1VCmkCw5s2K1dMaI78BJaQ.webp](/images/1_1VCmkCw5s2K1dMaI78BJaQ.webp)
+
+    **Deleting **the default Migrations folder ensures a clean start by removing unnecessary files before your first database push.
+
+    Add an DbSet for each of your Models — Without a `DbSet` for each model, the class remains standalone and will not be tracked or pushed to the database.
+
+    In the 
+  </Step>
 </Steps>
 
-## Setup your development
+
+## Setup your developmen
+
+## t
 
 Learn how to update your docs locally and deploy them to the public.
 
