@@ -775,6 +775,7 @@ Designing a solid ERM starts with **thinking from the UI and data workflow** —
 Example:
 
 - Creating a "Product"? → `Product` is the main entity.
+- Also think which data can i seed? and does not need an entry by myself
 
 ---
 
@@ -860,3 +861,292 @@ public class ProductCategory
 - Normalize repetitive data into lookup/reference tables
 - Avoid putting collections on both sides unless needed
 - Always define clear PK/FK logic
+
+## Validations
+
+# FluentValidation in Blazor: UI Integration & 50\+ Rule Examples
+
+This guide provides a full reference on how to use FluentValidation in a Blazor project, including hardcoded validations, live UI updates, and more than 50 practical validation rule examples.
+
+---
+
+## 📦 Setup FluentValidation in Blazor
+
+1. **Install the NuGet package**:
+
+```bash
+dotnet add package FluentValidation
+dotnet add package Blazored.FluentValidation
+```
+
+2. **`Register services in Program.cs:`**
+
+```csharp
+builder.Services.AddValidatorsFromAssemblyContaining<MyValidator>();
+```
+
+---
+
+## 🧠 Core Concept: Validation with FluentValidation
+
+- Create a model class (e.g. `Purchase`)
+- Create a corresponding validator
+- Bind it to the form in Blazor with `FluentValidationValidator`
+
+---
+
+## ✅ Hardcoded Entry Validation Example
+
+### Model
+
+```csharp
+public class Purchase
+{
+    public string? DiscountCode { get; set; }
+}
+```
+
+### Validator
+
+```csharp
+public class PurchaseValidator : AbstractValidator<Purchase>
+{
+    private static readonly string[] validCodes = ["student25", "summer10", "welcome50"];
+
+    public PurchaseValidator()
+    {
+        RuleFor(x => x.DiscountCode)
+            .Must(code => string.IsNullOrEmpty(code) || validCodes.Contains(code.ToLower()))
+            .WithMessage("Invalid discount code.");
+    }
+}
+```
+
+---
+
+## 🖥️ UI Integration in Razor
+
+```razor
+<EditForm Model="@purchase" OnValidSubmit="Submit">
+    <FluentValidationValidator />
+    <InputText @bind-Value="purchase.DiscountCode" />
+    <ValidationMessage For="@(() => purchase.DiscountCode)" />
+    <button type="submit">Submit</button>
+</EditForm>
+
+@code {
+    private Purchase purchase = new();
+}
+```
+
+---
+
+## 📚 50\+ FluentValidation Rule Examples
+
+```csharp
+RuleFor(x => x.Name).NotEmpty();
+RuleFor(x => x.Age).GreaterThan(18);
+RuleFor(x => x.Email).EmailAddress();
+RuleFor(x => x.Password).MinimumLength(8);
+RuleFor(x => x.Password).Matches("[A-Z]").WithMessage("Must contain uppercase letter.");
+RuleFor(x => x.Password).Matches("[0-9]").WithMessage("Must contain a number.");
+RuleFor(x => x.Username).Length(3, 20);
+RuleFor(x => x.Country).NotNull();
+RuleFor(x => x.TermsAccepted).Equal(true).WithMessage("You must accept the terms.");
+
+RuleFor(x => x.Price).InclusiveBetween(1, 1000);
+RuleFor(x => x.StartDate).LessThan(x => x.EndDate);
+RuleFor(x => x.BirthDate).Must(date => date < DateTime.Today).WithMessage("Birthdate must be in the past.");
+
+RuleFor(x => x.Phone).Matches(@"^\d{10}$");
+RuleFor(x => x.ZipCode).Matches(@"^[0-9]{5}$");
+RuleFor(x => x.UserRole).IsInEnum();
+RuleFor(x => x.Score).GreaterThanOrEqualTo(0).LessThanOrEqualTo(100);
+
+RuleFor(x => x.CustomField).Must(BeCustomValid).WithMessage("Custom logic failed.");
+RuleSet("AdminRules", () => {
+    RuleFor(x => x.AdminCode).NotEmpty();
+});
+
+RuleForEach(x => x.Tags).NotEmpty();
+RuleForEach(x => x.Tags).MaximumLength(20);
+
+RuleFor(x => x.Email).NotEmpty().When(x => x.IsSubscribed);
+RuleFor(x => x.DiscountCode).Must(code => ValidCodes.Contains(code)).WithMessage("Invalid discount");
+
+RuleFor(x => x.JsonData).Must(BeValidJson).WithMessage("Must be valid JSON.");
+RuleFor(x => x.ListItems).NotEmpty().WithMessage("At least one item required.");
+RuleFor(x => x.PasswordConfirmation).Equal(x => x.Password).WithMessage("Passwords do not match.");
+
+RuleFor(x => x.FileName).Must(name => Path.GetExtension(name) == ".pdf");
+RuleFor(x => x.HtmlContent).Must(content => !content.Contains("<script")).WithMessage("No scripts allowed.");
+
+RuleFor(x => x.Gender).Must(g => g == "M" || g == "F");
+RuleFor(x => x.NewsletterConsent).Equal(true).When(x => x.Email != null);
+
+RuleFor(x => x.Iban).CreditCard().WithMessage("Invalid IBAN format.");
+RuleFor(x => x.Url).Must(url => Uri.TryCreate(url, UriKind.Absolute, out _));
+RuleFor(x => x.Hour).InclusiveBetween(0, 23);
+
+RuleFor(x => x.Password).Must(p => p.Any(char.IsSymbol)).WithMessage("Use at least one symbol.");
+RuleFor(x => x.Balance).GreaterThanOrEqualTo(0).WithMessage("Cannot be negative.");
+RuleFor(x => x.ImageFile).Must(file => file.Length < 2_000_000).WithMessage("File too large.");
+
+RuleFor(x => x.ApprovalDate).GreaterThan(DateTime.Today.AddDays(-1));
+RuleFor(x => x.Timezone).Must(tz => TimeZoneInfo.GetSystemTimeZones().Any(z => z.Id == tz));
+RuleFor(x => x.DepartmentId).NotEqual(0).WithMessage("Please select a department.");
+
+RuleFor(x => x.UniqueName).MustAsync(async (name, _) => await CheckUniqueness(name));
+RuleFor(x => x.Age).GreaterThan(0).When(x => x.IsHuman);
+
+RuleFor(x => x.Details.Length).LessThanOrEqualTo(1000);
+RuleFor(x => x.Id).GreaterThan(0).WithMessage("ID must be greater than 0.");
+```
+
+---
+
+## 🧪 Tips for Live UI Feedback
+
+- Use `<ValidationMessage For="..." />` components
+- Call `EditContext.Validate()` to trigger validation manually
+- Use `.WithMessage()` to control user feedback
+- Keep the validator **stateless** and only reference known external data (e.g. hardcoded arrays)
+
+---
+
+## 📦 Resources
+
+- [FluentValidation Docs](https://docs.fluentvalidation.net)
+- [Blazored.FluentValidation GitHub](https://github.com/Blazored/FluentValidation)
+
+## Big example
+
+# 🏗️ Complex App Design with EF Core (Markdown Walkthrough)
+
+## 🎯 Scenario: Conference Management System
+
+You are tasked with building a **Conference Management System**. Users can:
+
+- Create and manage **Events** (conferences, meetups)
+- Add multiple **Sessions** to each Event
+- Assign **Speakers** to Sessions (a Speaker can speak at many Sessions; a Session can have many Speakers)
+- Register multiple **Attendees** per Event
+- Each Attendee can pick **multiple Sessions** to attend
+
+---
+
+## 🧠 Step-by-Step Mental Model
+
+1. **Main object**: `Event`  
+2. `Session` belongs to exactly **one** Event → **1:N**  
+3. `Attendee` belongs to exactly **one** Event → **1:N**  
+4. `Session` has **many** Speakers (and vice versa) → **M:N**  
+5. `Attendee` attends **many** Sessions (and vice versa) → **M:N**  
+
+---
+
+## 🗂️ Final Entity Overview
+
+### ✅ Event (Parent of Sessions & Attendees)
+```csharp
+public class Event
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+}
+```
+
+### ✅ Session (Child of Event)
+```csharp
+public class Session
+{
+    public int Id { get; set; }
+    public string Title { get; set; }
+
+    public int EventId { get; set; } // FK to Event
+}
+```
+
+### ✅ Speaker (Independent)
+```csharp
+public class Speaker
+{
+    public int Id { get; set; }
+    public string FullName { get; set; }
+}
+```
+
+### ✅ SessionSpeaker (Join Table for Session ↔ Speaker)
+```csharp
+public class SessionSpeaker
+{
+    public int SessionId { get; set; }
+    public int SpeakerId { get; set; }
+}
+```
+
+### ✅ Attendee (Child of Event)
+```csharp
+public class Attendee
+{
+    public int Id { get; set; }
+    public string Email { get; set; }
+
+    public int EventId { get; set; } // FK to Event
+}
+```
+
+### ✅ SessionAttendee (Join Table for Session ↔ Attendee)
+```csharp
+public class SessionAttendee
+{
+    public int SessionId { get; set; }
+    public int AttendeeId { get; set; }
+}
+```
+
+---
+
+## 🧠 Relationship Summary Table
+
+| Entity            | Parent         | FK Field         | Type    |
+|------------------|----------------|------------------|---------|
+| `Session`         | `Event`        | `EventId`         | 1:N     |
+| `Attendee`        | `Event`        | `EventId`         | 1:N     |
+| `SessionSpeaker`  | `Session`, `Speaker` | `SessionId`, `SpeakerId` | M:N (via table) |
+| `SessionAttendee` | `Session`, `Attendee` | `SessionId`, `AttendeeId` | M:N (via table) |
+
+---
+
+## 💡 Why No Navigation Properties?
+
+- Cleaner and faster DB context generation
+- Easier to control relationships manually in queries
+- Better for APIs where DTOs are custom
+
+---
+
+## 📋 Task Flow for Designing This System
+
+### Step 1: Think in Screens
+- "Create Event" → Requires `Event`
+- "Add Session to Event" → Needs `Session` with `EventId`
+- "Add Attendee" → Needs `Attendee` with `EventId`
+- "Assign Speaker to Session" → Join `SessionSpeaker`
+- "Attendee picks sessions" → Join `SessionAttendee`
+
+### Step 2: Identify Ownership
+- If an entity wouldn’t exist without another → It’s a **child**  
+- If two things are independent but related → Create a **join table**
+
+### Step 3: Normalize
+- No duplicate speaker names → Put speakers in their own table  
+- Same session can appear across events? No? → Link tightly to event  
+
+---
+
+## ✅ Final Notes
+
+- Every `1:N` → child holds the FK
+- Every `M:N` → build a join table (no need for nav props)
+- Think first about UI, then about data dependencies
