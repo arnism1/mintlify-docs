@@ -286,7 +286,7 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
     builder.Services.AddScoped<AppService>();
     ```
   </Step>
-  <Step title="Game Entry Mask">
+  <Step title="Upsert Entry Mask">
     ```csharp Game.razor
     @page "/game"
     @page "/game/{id:int?}"
@@ -490,6 +490,102 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
             NavigationManager.NavigateTo("/games");
         }
     }
+    ```
+  </Step>
+  <Step title="List all Games">
+    ```csharp
+    @page "/games"
+    @using VideoGameTest.Data.Models
+    @inject NavigationManager navman
+    @inject IJSRuntime JSRuntime
+    @rendermode InteractiveServer
+    @inject AppService appservice
+    
+    <h3>Games List</h3>
+    
+    
+    <a href="/game">Create a Game</a>
+    
+    @if (games == null)
+    {
+        <p><em>Loading games...</em></p>
+    }
+    else if (!games.Any())
+    {
+        <p><em>No games available.</em></p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table id="gamesTable" class="table table-striped table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Developer</th>
+                        <th scope="col">Publisher</th>
+                        <th scope="col">ReleaseDate</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Genres</th>
+                        <th scope="col">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var game in games)
+                    {
+                        <tr>
+                            <td>@game.Title</td>
+                            <td>@(game.Developer?.Name ?? "N/A")</td>
+                            <td>@(game.Publisher?.Name ?? "N/A")</td>
+                            <td>@(game.VideoGameDetails?.ReleaseDate.ToString() ?? "N/A")</td>
+                            <td>@(game.VideoGameDetails?.Description?.ToString() ?? "N/A")</td>
+                            <td>
+                                     @if (game.VideoGameGenres?.Any() == true)
+                                    {
+                                        <span>@string.Join(", ", game.VideoGameGenres.Where(pt => pt.Genre != null).Select(pt => pt.Genre.Name))</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No genres</span>
+                                    } 
+                            </td>
+                            <td>
+                        <a href="/game/@game.Id" class="btn btn-sm btn-primary">Edit</a>
+                                                    <button type="button" class="btn btn-sm btn-danger" @onclick="() => HandleDelete(game.Id)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    
+    @code {
+    
+        private List<VideoGame>? games;
+    
+        public async void HandleDelete(int id)
+        {
+            await appservice.DeleteVideoGameAsync(id);
+            navman.NavigateTo("/games", true);
+        }
+    
+        protected override async Task OnInitializedAsync()
+        {
+            games = await appservice.ListVideoGamesAsync();
+        }
+    
+    //Uncomment this first
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender && games?.Any() == true)
+            {
+                await JSRuntime.InvokeVoidAsync("initializeDataTable");
+            }
+        }
+    }
+    
     ```
   </Step>
 </Steps>
