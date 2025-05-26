@@ -735,6 +735,12 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
                 .MaximumLength(23).WithMessage("Name not so long please.");
     
                 RuleFor(x => x.VideoGameDetails.Description).MaximumLength(100).WithMessage("Description not so long bro");
+    
+     RuleFor(x => x.VideoGameGenres)
+         .Must(genres => genres != null && genres.Count >= 1)
+         .WithMessage("At least one tag must be selected.")
+         .Must(genres => genres == null || genres.Count <= 3)
+         .WithMessage("Maximum 3 tags can be selected.");
             }
         }
     }
