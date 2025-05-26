@@ -214,6 +214,72 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
      }
     ```
   </Step>
+  <Step title="Create a Service">
+    You can skip creating an Interface since it is not necessary after all and can steal you time in a testing enviroment.
+
+    ```csharp
+    public class AppService
+    {
+        private readonly ApplicationDbContext _context;
+        public AppService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+        public async Task<List<Developer>> ListDevelopersAsync()
+        {
+            return await _context.Developers.ToListAsync();
+        }
+        public async Task<List<Publisher>> ListPublishersAsync()
+        {
+            return await _context.Publishers.ToListAsync();
+        }
+        public async Task<List<Genre>> ListGenresAsync()
+        {
+            return await _context.Genre.ToListAsync();
+        }
+        public async Task<List<VideoGame>> ListVideoGamesAsync()
+        {
+            return await _context.VideoGames
+                .Include(g => g.VideoGameDetails)
+                .Include(g => g.VideoGameGenres)
+                    .ThenInclude(gg => gg.Genre)
+                .Include(g => g.Developer)
+                .Include(g => g.Publisher)
+                .ToListAsync();
+        }
+    
+        //CREATE
+        public async Task AddVideoGameAsync(VideoGame game)
+        {
+            _context.VideoGames.Add(game);
+            await _context.SaveChangesAsync();
+        }
+    
+        //DELETE
+        public async Task DeleteVideoGameAsync(int id)
+        {
+            var game = await _context.VideoGames.FindAsync(id);
+    
+            if (game != null)
+            {
+                _context.VideoGames.Remove(game);
+                await _context.SaveChangesAsync();
+            }
+        }
+        public async Task<VideoGame?> GetVideoGameByIdAsync(int id)
+        {
+            return await _context.VideoGames.FindAsync(id);
+        }
+    
+        //UPDATE
+        public async Task UpdateGameAsync(VideoGame game)
+        {
+            _context.Update(game);
+            await _context.SaveChangesAsync();
+        }
+    }
+    ```
+  </Step>
 </Steps>
 
 ## Setup your developmen
