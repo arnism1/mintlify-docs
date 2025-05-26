@@ -1,0 +1,192 @@
+---
+title: "Time in Blazor"
+description: "Description of your new file."
+---
+
+````
+```razor
+@using TimeManagment.Web.UI.AppServices
+@using TimeManagment.Web.UI.Models
+@inject IAppService AppService
+@inject IIDentityService userService
+@inject NavigationManager navman;
+ 
+   <div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+    <div class="modal-dialog  modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Zeiten Eintragen / Bearbeiten</h5>
+                <button type="button"  @onclick="() => Close()" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p> Bisherige Buchungen - Speichern nicht VERGESSEN !!!! ;) </p>
+                <button type="button" class="btn-dark" @onclick="()=> AddNewEntryToUser()">Hinzufügen ... </button>
+                <form>
+
+               
+                @foreach (var workRecord in User.StoredUserRecords)
+                    { 
+                   
+                          <EditForm Model="workRecord" OnValidSubmit=" () =>  HandleValidSubmit(workRecord)">
+                                    <DataAnnotationsValidator />
+                                     <ValidationSummary />
+                                          <div class="form-group">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th> von </th>
+                                        <th>bis </th>
+                                        <th>Notiz</th>
+                                        <th>Projekt</th>
+                                        <th> Tätigkeit </th>
+                                        <th> Kunde </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                        <tr>
+                                            <td>
+                                                 <p>@($"{workRecord.CreationDate.Date.ToString("dd/MM/yyyy")}") </p>
+                                            </td>
+
+                                            <td>
+                                                       <div class="form-group">
+                                                        <InputDate Type="InputDateType.Time" id="releaseDate" class="form-control" @bind-Value="workRecord.WorkedFrom" />
+                                                        </div>
+                                           </td>
+                                            <td> 
+                                                <div class="form-group">
+                                                <InputDate Type="InputDateType.Time" id="releaseDate" class="form-control" @bind-Value="workRecord.WorkedTo" />
+                                                </div>
+
+                                            </td>
+                                            <td>
+                                                        <div class="form-group">
+                                                        <InputText id="releaseDate" class="form-control" @bind-Value="workRecord.Note" />
+                                                        </div>
+                                            </td>
+                                            <td> 
+                                                  <div class="form-group">
+                                                    <InputSelect id="releaseDate" class="form-control" @bind-Value="workRecord.WorkTaskId">
+                                                    @foreach (WorkTask task in AppService.GetWorkTasks().ToList())
+                                                    {
+                                
+                                                        <option value="@task.Id">@($"{task.Name} (ID: {task.Id})")</option>
+                                                        }
+                                                    </InputSelect>
+                                                    </div>
+                                            </td>
+                                            <td>
+                                                   <div class="form-group">
+                                                    <InputSelect id="releaseDate" class="form-control" @bind-Value="workRecord.ProjectId">
+                                                     @foreach (var entry in AppService.GetAllProjects().ToList())
+                                                            {
+                                                                <option value="@entry.Id">@($"{entry.Name} (ID: {entry.Id})")</option>
+                                                            }
+                                                   </InputSelect>
+                                                   </div>
+                                            </td>
+                                           
+                                            <td>
+                                                  <div class="form-group">
+                                                    <InputSelect id="releaseDate" class="form-control" @bind-Value="workRecord.CustomerId">
+                                                    @foreach (var entry in AppService.GetAllCustomers().ToList())
+                                                    {
+                                                        <option value="@entry.Id">@($"{entry.FirstName + "" + entry.LastName} (ID: {entry.Id})")</option>
+                                                    }
+                                                    </InputSelect>
+                                                    </div>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="bg-danger" @onclick="()=> DeleteEntryForUser(workRecord)"> 🚯Löschen </button>
+                                            </td>
+                                            
+                                        </tr>
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Save THE ENTIRE APP</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => Close()">Close</button>
+                            </div>
+                        </EditForm>
+                    }
+                  }
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@if (ShowBackdrop)
+{
+        <div class="modal-backdrop fade show"></div>
+}
+@code {
+
+    public ApplicationUser User { get; set; }
+
+
+    public void AddNewEntryToUser( )
+    {
+        User.StoredUserRecords.Add(new WorkRecord()
+            {
+                User = this.User,
+                WorkedFrom = DateTime.Now,
+                WorkedTo =   DateTime.Now.AddHours(2),
+            });
+    }
+
+    public void DeleteEntryForUser(WorkRecord workRecord){
+
+        User.StoredUserRecords.Remove(workRecord);
+
+        StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit(WorkRecord workRecord)
+    {
+        //if (await IsDuplicateEntryAsync(workRecord.WorkedFrom, workRecord.WorkedTo)) USER?
+        //{
+        //    // Show error message
+        //    return;
+        //}
+        AppService.SaveRecords(User);
+        navman.NavigateTo("time", true);
+    }
+
+    public Guid Guid = Guid.NewGuid();
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+
+    public void Open()
+    {
+        ModalDisplay = "block;";
+        ModalClass = "Show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+
+    public void Close()
+    {
+        ModalDisplay = "none";
+        ModalClass = "";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+
+    public List<ApplicationUser> userlist { get; set; }
+    public List <Customer> customerlist { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        userlist = this.AppService.GetApplicationUsers().ToList();
+        customerlist = this.AppService.GetAllCustomers().ToList();
+        User = await userService.GetCurrentUser();
+    }
+}
+```
+````
