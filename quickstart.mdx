@@ -59,8 +59,6 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
     Very Important\! select RenderMode Server \!
 
     Another Thing to do right in the beginning is to adjust the Connection String
-
-    ![1_6HsMEtPK--yx92_QXGZd7g.webp](/images/1_6HsMEtPK--yx92_QXGZd7g.webp)
   </Step>
   <Step title="JsonSettings">
     Before you begin coding, make sure to enable Detailed Errors. While you shouldn’t encounter too many issues, it’s important that any errors that do occur are as detailed as possible. You can do this in your **.json** File.
@@ -1005,7 +1003,8 @@ RuleFor(x => x.Id).GreaterThan(0).WithMessage("ID must be greater than 0.");
 
 ## ⏱️ Zeitbezogene Regeln (Zeitpunkte, Start/Ende, Dauer)
 
-### ✅ Startzeit < Endzeit
+### ✅ Startzeit \< Endzeit
+
 ```csharp
 RuleFor(x => x.End)
     .GreaterThan(x => x.Start)
@@ -1013,6 +1012,7 @@ RuleFor(x => x.End)
 ```
 
 ### ✅ Startzeit darf nicht in der Vergangenheit liegen
+
 ```csharp
 RuleFor(x => x.Start)
     .GreaterThanOrEqualTo(DateTime.Now)
@@ -1020,6 +1020,7 @@ RuleFor(x => x.Start)
 ```
 
 ### ✅ Mindestdauer von 15 Minuten
+
 ```csharp
 RuleFor(x => x.End - x.Start)
     .Must(duration => duration.TotalMinutes >= 15)
@@ -1027,6 +1028,7 @@ RuleFor(x => x.End - x.Start)
 ```
 
 ### ✅ Maximaldauer 8 Stunden
+
 ```csharp
 RuleFor(x => x.End - x.Start)
     .Must(duration => duration.TotalHours <= 8)
@@ -1038,6 +1040,7 @@ RuleFor(x => x.End - x.Start)
 ## 📅 Tages- und Wochenvalidierung
 
 ### ✅ Kein Wochenende erlaubt
+
 ```csharp
 RuleFor(x => x.Date)
     .Must(date => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
@@ -1045,6 +1048,7 @@ RuleFor(x => x.Date)
 ```
 
 ### ✅ Innerhalb der Arbeitswoche (Mo–Fr)
+
 ```csharp
 RuleFor(x => x.Date)
     .Must(date => date.DayOfWeek is >= DayOfWeek.Monday and <= DayOfWeek.Friday)
@@ -1056,6 +1060,7 @@ RuleFor(x => x.Date)
 ## 📆 Zeiträume & Kollisionen (verfügbare Slots)
 
 ### ✅ Zeitraum nicht mit bestehender Buchung überlappend (Pseudo-Beispiel)
+
 ```csharp
 RuleFor(x => x)
     .Must((model, context) => !IsTimeSlotTaken(model.Start, model.End))
@@ -1066,7 +1071,8 @@ RuleFor(x => x)
 
 ## ⏳ Zeiterfassung & Arbeitszeit
 
-### ✅ Gesamtarbeitszeit pro Tag < 10 Stunden
+### ✅ Gesamtarbeitszeit pro Tag \< 10 Stunden
+
 ```csharp
 RuleFor(x => x.WorkedMinutes)
     .LessThanOrEqualTo(600)
@@ -1074,6 +1080,7 @@ RuleFor(x => x.WorkedMinutes)
 ```
 
 ### ✅ Pause von mindestens 30 Minuten bei mehr als 6 Std.
+
 ```csharp
 RuleFor(x => x.BreakMinutes)
     .Must((model, breakMin) => model.WorkedMinutes > 360 ? breakMin >= 30 : true)
@@ -1081,6 +1088,7 @@ RuleFor(x => x.BreakMinutes)
 ```
 
 ### ✅ Kein Arbeitseintrag über Mitternacht erlaubt
+
 ```csharp
 RuleFor(x => x.End.Day)
     .Equal(x => x.Start.Day)
@@ -1092,6 +1100,7 @@ RuleFor(x => x.End.Day)
 ## 🕐 Uhrzeitfenster prüfen
 
 ### ✅ Innerhalb Geschäftszeit (08:00–18:00)
+
 ```csharp
 RuleFor(x => x.Start.TimeOfDay)
     .Must(time => time >= TimeSpan.FromHours(8) && time <= TimeSpan.FromHours(18))
@@ -1099,6 +1108,7 @@ RuleFor(x => x.Start.TimeOfDay)
 ```
 
 ### ✅ Nicht vor 06:00 Uhr
+
 ```csharp
 RuleFor(x => x.Start.TimeOfDay)
     .GreaterThanOrEqualTo(TimeSpan.FromHours(6))
@@ -1110,6 +1120,7 @@ RuleFor(x => x.Start.TimeOfDay)
 ## 📉 Weitere zeitliche Prüfungen
 
 ### ✅ Pausen dürfen nicht länger als die Arbeitszeit sein
+
 ```csharp
 RuleFor(x => x.BreakMinutes)
     .Must((model, breakMins) => breakMins < model.WorkedMinutes)
@@ -1117,6 +1128,7 @@ RuleFor(x => x.BreakMinutes)
 ```
 
 ### ✅ Arbeitsdauer muss genau 8 Std. sein (z. B. Pflichtmodell)
+
 ```csharp
 RuleFor(x => x.End - x.Start)
     .Must(duration => duration.TotalHours == 8)
@@ -1124,6 +1136,7 @@ RuleFor(x => x.End - x.Start)
 ```
 
 ### ✅ Zeitstempel darf nicht in Zukunft liegen
+
 ```csharp
 RuleFor(x => x.Timestamp)
     .LessThanOrEqualTo(DateTime.Now)
@@ -1135,6 +1148,7 @@ RuleFor(x => x.Timestamp)
 ## 💼 Kalendereinträge
 
 ### ✅ Maximal 3 Termine am selben Tag
+
 ```csharp
 RuleFor(x => x)
     .Must((model, context) => GetAppointmentCount(model.Date) < 3)
@@ -1142,6 +1156,7 @@ RuleFor(x => x)
 ```
 
 ### ✅ Termine dürfen nicht überlappen (Start-Start-Check)
+
 ```csharp
 RuleFor(x => x)
     .Must(model => !AppointmentOverlaps(model.Start, model.End))
@@ -1153,12 +1168,14 @@ RuleFor(x => x)
 ## 🧠 Komplexere Regeln
 
 ### ✅ Gleitzeitregelung (z. B. nur 6–20 Uhr erlaubt)
+
 ```csharp
 RuleFor(x => x.Start.TimeOfDay)
     .Must(t => t >= TimeSpan.FromHours(6) && t <= TimeSpan.FromHours(20));
 ```
 
 ### ✅ Keine Buchungen über 2 Kalendertage
+
 ```csharp
 RuleFor(x => (x.Start, x.End))
     .Must(x => x.Start.Date == x.End.Date)
@@ -1166,18 +1183,18 @@ RuleFor(x => (x.Start, x.End))
 ```
 
 ### ✅ Mindestabstand von 10 Minuten zwischen zwei Einträgen
+
 ```csharp
 RuleFor(x => x)
     .Must(x => HasMinimumGapToPrevious(x.Start))
     .WithMessage("Mindestens 10 Minuten Abstand zum vorherigen Eintrag nötig.");
 ```
 
-
 ---
 
 ## 
 
-##  Tips for Live UI Feedback
+## Tips for Live UI Feedback
 
 - Use `<ValidationMessage For="..." />` components
 - Call `EditContext.Validate()` to trigger validation manually
