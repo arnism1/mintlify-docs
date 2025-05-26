@@ -588,6 +588,74 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
     
     ```
   </Step>
+  <Step title="Create a Datagrid for searching and filtering">
+    <Info>
+      https://gist.github.com/arnism1/6760962f0503e43fd71ef1c888865a1f (If needed)
+    </Info>
+    ![Screenshot 2025-05-26 170928.png](/images/Screenshot2025-05-26170928.png)
+
+    Go inside or create this File
+
+    <Warning>
+      #gamesTable =\> this value depends on what you have used in the Games.razor
+    </Warning>
+    ```js
+    function initializeDataTable() {
+        // Add the search inputs to each header cell
+        $('#gamesTable thead tr')
+            .clone(true)
+            .addClass('filters')
+            .appendTo('#gamesTable thead');
+    
+        $('#gamesTable').DataTable({
+            orderCellsTop: true,
+            fixedHeader: true,
+            initComplete: function () {
+                var api = this.api();
+    
+                // For each column
+                api.columns().eq(0).each(function (colIdx) {
+                    // Skip the Actions column
+                    if (colIdx === 6) return;
+    
+                    // Add a search input
+                    var cell = $('.filters th').eq(colIdx);
+                    var title = $(cell).text();
+                    $(cell).html('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />');
+    
+                    // Add search functionality
+                    $('input', $('.filters th').eq(colIdx))
+                        .on('keyup change', function () {
+                            if (api.column(colIdx).search() !== this.value) {
+                                api
+                                    .column(colIdx)
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                });
+            },
+            language: {
+                search: "Search all:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                }
+            },
+            pageLength: 10,
+            order: [[0, 'asc']], // Sort by first column (Name) ascending
+            columnDefs: [
+                { orderable: false, targets: 6 }, // Disable sorting on the Actions column (if its the 7 then 6 because of the index)
+                { searchable: false, targets: 6 } // Disable searching on the Actions column (if its the 7 then 6 because of the index)
+            ]
+        });
+    } 
+    ```
+  </Step>
 </Steps>
 
 ## Setup your developmen
