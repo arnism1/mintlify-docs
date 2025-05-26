@@ -190,8 +190,17 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
             public ICollection<VideoGameGenre>? VideoGameGenres { get; set; } = new List<VideoGameGenre>();
         }
     }
-    
     ```
+
+    <Check>
+      Make sure to make an Migration now:
+
+      `add-migration "start"`
+
+      Make sure to make an Update after:
+
+      `update-database`
+    </Check>
   </Step>
   <Step title="Data/ApplicationDbContext.cs">
     ```csharp
