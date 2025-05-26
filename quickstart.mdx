@@ -708,9 +708,37 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
     ![image.png](/images/image.png)
 
     Inside here create your ValidationFile:
-  </Step>
-  <Step title="New Step">
+
+    ```csharp VideoGameValidator.cs
+    using FluentValidation;
+    using VideoGameTest.Data.Models;
     
+    namespace VideoGame3.Validations
+    {
+        public class GameValidator : AbstractValidator<VideoGame>
+        {
+            public GameValidator()
+            {
+                RuleFor(x => x.Title)
+                .NotEmpty().WithMessage("Name is required.");
+    
+                RuleFor(x => x.Title)
+                .MaximumLength(23).WithMessage("Name not so long please.");
+    
+                RuleFor(x => x.VideoGameDetails.Description).MaximumLength(100).WithMessage("Description not so long bro");
+            }
+        }
+    }
+    
+    ```
+
+    Register the Validation:
+
+    ```csharp Program.cs
+    using FluentValidation;
+    builder.Services.AddScoped<IValidator<VideoGame>, GameValidator>();
+    
+    ```
   </Step>
 </Steps>
 
