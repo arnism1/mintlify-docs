@@ -1,0 +1,196 @@
+---
+title: "New file"
+description: "Description of your new file."
+---
+
+Service
+
+```csharp
+public class AppService : IAppService
+{
+    #region DOK: ADD THIS TO THE DOCUMENTATION
+
+    private readonly ApplicationDbContext _context;
+    public AppService(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+    #endregion
+
+    public string CheckDirectory(string path)
+    {
+
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return "Ungültiger Pfad. Bitte geben Sie einen gültigen Pfad ein.";
+        }
+
+        if (!System.IO.Directory.Exists(path))
+        {
+            return "Das angegebene Verzeichnis existiert nicht. Bitte geben Sie einen gültigen Pfad ein.";
+        }
+
+        return "Pfad ist sauber, wir fahren fort";
+    }
+
+
+    public DirectoryEntry ScanDirectory(string path, DirectoryEntry? directoryEntry = null)
+    {
+        try
+        {
+            var directoryInfo = new DirectoryInfo(path);
+
+
+            var directoryEntity = new DirectoryEntry
+            {
+                Path = path,
+                FileCount = directoryInfo.GetFiles().Length,
+                Size = directoryInfo.GetFiles().Sum(f => f.Length),
+                Parent = directoryEntry,//default should be null only if called in the recursion
+                SubDirectories = new List<DirectoryEntry>()
+            };
+
+
+            //for all subdirectories
+            foreach (var subDirectory in directoryInfo.GetDirectories())
+            {
+                if (ScanDirectory(subDirectory.FullName, directoryEntity) is DirectoryEntry subDirectoryEntity)
+                {
+                    directoryEntity.SubDirectories.Add(subDirectoryEntity);
+                }
+            }
+            return directoryEntity;
+
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Console.WriteLine($"Keine berechtigung auf {path}", "es wird übersprungen");
+            return null;
+        }
+    }
+
+    public DirectoryIndex SaveDirectory(DirectoryEntry directoryEntity)
+    {
+
+        DirectoryIndex x = new DirectoryIndex();
+        x.PathName = directoryEntity.Path;
+        _context.DirectoryIndices.Add(x);
+        _context.SaveChanges();
+        //save to have id
+
+
+
+        UpdateIndexId(directoryEntity, x.Id);
+
+
+        //save again
+        _context.DirectoryEntries.Add(directoryEntity);
+        _context.SaveChanges();
+
+        return x;
+    }
+
+
+    public void UpdateIndexId(DirectoryEntry directoryEntity, int newId)
+    {
+        Console.WriteLine($"{directoryEntity.Path}");
+        directoryEntity.IndexId = newId;
+
+        foreach (var subDirectory in directoryEntity.SubDirectories)
+        {
+            UpdateIndexId(subDirectory, newId);
+        }
+    }
+
+    public IEnumerable<DirectoryEntry> GetDirectoriesEntrie()
+        {
+        //remove include to test
+        return _context.DirectoryEntries.Include(z => z.SubDirectories);
+        }
+}
+```
+
+```cs
+    public class DirectoryEntry
+    {
+        public int Id { get; set; }  
+        public string Path { get; set; }  
+        public int FileCount { get; set; }  
+        public long Size { get; set; }  
+        public int? ParentId { get; set; }  
+        public DirectoryEntry Parent { get; set; } 
+        public int IndexId { get; set; }
+        public ICollection<DirectoryEntry> SubDirectories { get; set; } = new List<DirectoryEntry>();  // Collection of Subdirectories...
+    }
+
+    public class DirectoryIndex
+    {
+        public int Id { get; set; }
+        public DateTime Index { get; set; } = DateTime.Now;
+        public string PathName { get; set; }
+}
+```
+
+```cs
+@page "/"
+@using RecursiveDirectoryWeb.Data.AppService
+@using RecursiveDirectoryWeb.Models
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.QuickGrid;
+
+<PageTitle>Verzeichnisanalyse</PageTitle>
+
+@inject IAppService appService
+
+<p>
+    <label>Pfad eingeben: <input @bind="inputValue" /></label>
+</p>
+
+<p>You entered: @inputValue</p>
+@* Quickgrid later *@
+
+@if (inputValue != null)
+{
+    checkresult = appService.CheckDirectory(inputValue);
+    <p> @checkresult</p>
+    {
+        entry = appService.ScanDirectory(inputValue);
+    }
+
+    <button @onclick="() => StoretoDb() ">
+        Push to Db !
+    </button>
+
+
+    @if (itemsQueryable != null)
+    {
+        <QuickGrid Items="@itemsQueryable" Pagination="pagination"> 
+          <PropertyColumn Property="x => x.Size" Title="Größe" Sortable="true">
+    </PropertyColumn> 
+    <PropertyColumn Property="x => x.Path" Title="Name" Sortable="true">
+    </PropertyColumn>
+            <PropertyColumn Property="x => x.ParentId" Title="Name" Sortable="true">
+            </PropertyColumn>
+        </QuickGrid>
+        <Paginator State="@pagination" />
+    }
+}
+
+@code {
+    //sets how many items per Grid-Page
+    public PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private string inputValue;
+    public string checkresult;
+    public DirectoryEntry entry;
+    IQueryable<DirectoryEntry>? itemsQueryable;
+
+    public void StoretoDb()
+    {
+        var item = appService.SaveDirectory(entry);
+        //after thats finished load data
+
+        //load DAta to GRID and get LOST!
+        itemsQueryable = appService.GetDirectoriesEntrie().ToList().AsQueryable().Where(x => x.IndexId == item.Id);
+    }
+}
+```

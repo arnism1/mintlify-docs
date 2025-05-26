@@ -1,0 +1,155 @@
+---
+title: "New file"
+description: "Description of your new file."
+---
+
+```csharp Wine.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Wein.Model
+{
+    public class Wein
+    {
+        public int WeinId { get; set; }
+
+        [Required(ErrorMessage = "Das Feld: Bezeichnung ist erforderlich.")]
+        [StringLength(35, ErrorMessage = "Der Text darf maximal 35 Zeichen lang sein.")]
+        public string Bezeichnung { get; set; }
+
+        [Required(ErrorMessage = "Das Feld: Weinart ist erforderlich.")]
+        [StringLength(35, ErrorMessage = "Der Text darf maximal 35 Zeichen lang sein.")]
+        public string Weinart { get; set; }
+
+        [Required]
+        [Range(1000, 2100, ErrorMessage = "Das Jahr muss von 1900 bis Jahr 2100 sein")]
+        public int Jahrgang { get; set; } = DateTime.Now.Year;// Jahr als einfache Zahl
+
+        [Required(ErrorMessage = "Das Feld: Weingut ist erforderlich.")]
+        [StringLength(35, ErrorMessage = "Der Text darf maximal 35 Zeichen lang sein.")]
+        public string Weingut { get; set; } // Name des Weinguts als einfacher String
+
+        [Required(ErrorMessage = "Das Feld: Rebsorte ist erforderlich.")]
+        [StringLength(35, ErrorMessage = "Der Text darf maximal 35 Zeichen lang sein.")]
+        public string Rebsorte { get; set; } // Name der Rebsorte als einfacher String
+
+        [Required(ErrorMessage = "Das Feld: Herkunftsland ist erforderlich.")]
+        [StringLength(35, ErrorMessage = "Der Text darf maximal 35 Zeichen lang sein.")]
+        public string Herkunftsland { get; set; } // Name des Herkunftslands als einfacher String
+
+        [Required(ErrorMessage = "Das Feld: Region ist erforderlich.")]
+        [StringLength(35, ErrorMessage = "Der Text darf maximal 35 Zeichen lang sein.")]
+        public string Region { get; set; } // Name der Region als einfacher String
+       // im Nachhinein anfügen
+       public bool inWeinKarte { get; set; } = false; //ist dieser Wein in der aktuellWen Weinkarte vorhanden ja nein?
+    }
+
+}
+```
+
+```razor
+@page "/weins"
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Wein.Model
+@using Wein.Data
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IDbContextFactory<WeinContext> DbFactory
+@inject NavigationManager navman
+@implements IAsyncDisposable
+
+<AuthorizeView>
+    <Authorized>
+        <PageTitle>Weine</PageTitle>
+
+        <h1>Aktuelle Wein-Artikel</h1>
+        <p>
+            <a href="weins/create">Create New</a>
+            @errortext;
+        </p>
+        <QuickGrid Items="_context.Weine" Class="table" @ref="grid">
+            <PropertyColumn Property="wein => wein.Bezeichnung" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Weinart" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Jahrgang" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Weingut" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Rebsorte" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Herkunftsland" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Region" Sortable="true" />
+
+            @* CRUD *@
+            <TemplateColumn Context="wein">
+
+                <a href="@($"weins/edit?weinid={wein.WeinId}")">Edit</a> |
+                <a href="@($"weins/details?weinid={wein.WeinId}")">Details</a> |
+                <a href="@($"weins/delete?weinid={wein.WeinId}")">Delete</a>
+            </TemplateColumn>
+
+            <TemplateColumn Context="wein" Title="in Weinkarte">
+                <input type="checkbox" checked="@wein.inWeinKarte" @onchange="@(e => OnCheckboxChanged(wein, e.Value))" />
+            </TemplateColumn>
+
+        </QuickGrid>
+
+    </Authorized>
+    <NotAuthorized>
+        <p> Hallo Gast! - wirf eine Blick auf unsere aktuelle Weinkarte</p>
+        <QuickGrid Items="WeinKarte" Class="table">
+            <PropertyColumn Property="wein => wein.Bezeichnung" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Weinart" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Jahrgang" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Weingut" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Rebsorte" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Herkunftsland" Sortable="true" />
+            <PropertyColumn Property="wein => wein.Region" Sortable="true" />
+        </QuickGrid>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    QuickGrid<Wein> grid;
+    public string errortext { get; set; }
+    private WeinContext _context;
+    public IQueryable<Wein> WeinKarte { get; private set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _context = DbFactory.CreateDbContext();
+        WeinKarte = _context.Weine.Where(wein => wein.inWeinKarte == true);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_context != null)
+        {
+            await _context.DisposeAsync();
+        }
+    }
+
+    private async Task OnCheckboxChanged(Wein wein, object? newValue)
+    {
+        bool isChecked = (bool)newValue;
+
+        // Count the number of wines already selected for the wine card
+        int selectedCount = await _context.Weine.CountAsync(w => w.inWeinKarte);
+
+        // Allow checking only if there are less than 10 wines currently selected
+        if (isChecked && selectedCount >= 10)
+        {
+            errortext = "You can only select up to 10 wines for the wine card.";
+            wein.inWeinKarte = false; // Reset to false if checked exceeds the limit
+
+            navman.NavigateTo("/Weins", true);
+            return; // Exit without saving changes
+        }
+
+        // Apply the checkbox change
+        wein.inWeinKarte = isChecked;
+
+        _context.Weine.Update(wein);
+        await _context.SaveChangesAsync();
+        StateHasChanged();
+    }
+}
+```
