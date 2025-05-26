@@ -80,7 +80,7 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
 
     ![1_uc0WfTdjke5ktKOrGNHsXQ.webp](/images/1_uc0WfTdjke5ktKOrGNHsXQ.webp)
 
-    _<Tooltip tip="">in this example localdb but not always\!</Tooltip>_
+    _in this example localdb but not always\!_
 
     ```json
         "DefaultConnection": "Server=DESKTOP-C6JNJAT\\SQLEXPRESS;Database=DoctorManagement;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;"
@@ -99,14 +99,106 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
   <Step title="Create Models">
     ![1_1VCmkCw5s2K1dMaI78BJaQ.webp](/images/1_1VCmkCw5s2K1dMaI78BJaQ.webp)
 
-    **Deleting **the default Migrations folder ensures a clean start by removing unnecessary files before your first database push.
+    \*\*Deleting \*\*the default Migrations folder ensures a clean start by removing unnecessary files before your first database push.
 
     Add an DbSet for each of your Models — Without a `DbSet` for each model, the class remains standalone and will not be tracked or pushed to the database.
 
-    In the 
+    | Modell           | Beziehung                                            | Elternteil      | Kinderteil       | EF Core Implementierung                                                                      |
+    | ---------------- | ---------------------------------------------------- | --------------- | ---------------- | -------------------------------------------------------------------------------------------- |
+    | Developer        | Mehrere VideoGames können 1en Developer haben        | Developer       | VideoGame        | Im VideoGame Element eine Referenz zu Developer und einmal DeveloperId                       |
+    | Publisher        | Mehrere VideoGames können 1en Publisher haben        | Publisher       | VideoGame        | Im VideoGame Element eine Referenz zu Publisher und einmal PublisherId                       |
+    | VideoGameDetails | 1 VideoGame kann 1e VideoGameDetails haben (1:1)     | VideoGame       | VideoGameDetails | Im VideoGameDetails Element eine Referenz zu VideoGame und einmal VideoGameId                |
+    | VideoGameGenre   | Mehrere VideoGames können mehrere Genres haben (N:N) | VideoGame/Genre | VideoGameGenre   | Im VideoGameGenre Element eine Referenz zu VideoGame und Genre sowie VideoGameId und GenreId |
+
+    ```csharp Models / Publisher.cs
+      public class Publisher
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+    ```
+
+    ```csharp Models / Developer.cs
+     public class Developer
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+    
+        }
+    ```
+
+    The Main EntryMask
+
+    ```csharp
+     public class VideoGame
+        {
+            public int Id { get; set; }
+            public string? Title { get; set; }
+            public string? Platform { get; set; }
+            
+            //1 Developer can have many Games
+            public int DeveloperId { get; set; }
+            public Developer? Developer { get; set; }
+    
+            //1 Publisher can have many Games
+            public int PublisherId { get; set; }
+            public Publisher? Publisher { get; set; }
+            
+            //1 Game has 1 VideoGameDetails
+            // 1:1 => NavigationPropertys (conveniant for queriying)
+            public VideoGameDetails? VideoGameDetails { get; set; }
+    
+            //N:N
+    
+            //DO NOT DO THE OTHER ONE FOR GOD's SAKE
+            public ICollection<VideoGameGenre>? VideoGameGenres { get; set; } = new List<VideoGameGenre>();
+        }
+    ```
+
+    ```cs
+     public class VideoGameDetails
+        { 
+           public int Id { get; set; }
+           public string? Description { get; set; }
+           public DateTime ReleaseDate { get; set; }
+           public int VideoGameId { get; set; }
+        }
+    ```
+
+    ```cs
+       public class VideoGameGenre
+        {
+            public int Id { get; set; }
+    
+            //first N
+            public int VideoGameId { get; set; }
+            public VideoGame VideoGame { get; set; }
+    
+    
+            //second N
+            public int GenreId { get; set; }
+            public Genre Genre { get; set; }
+        }
+    ```
+
+    ```cs
+    namespace VideoGameTest.Data.Models
+    {
+        public class Genre
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public ICollection<VideoGameGenre>? VideoGameGenres { get; set; } = new List<VideoGameGenre>();
+        }
+    }
+    
+    ```
+
+    c
+
+    c
   </Step>
 </Steps>
-
 
 ## Setup your developmen
 
