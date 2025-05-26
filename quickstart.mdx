@@ -758,6 +758,7 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
 </Steps>
 
 ## More on Modeling:
+
 # 🧠 How to Perfectly Emit an Entity-Relationship Model (ERM)
 
 Designing a solid ERM starts with **thinking from the UI and data workflow** — then translating that into clean, normalized entities.
@@ -767,29 +768,33 @@ Designing a solid ERM starts with **thinking from the UI and data workflow** —
 ## 📍 Step-by-Step Mental Model
 
 ### 1. **Start with the Main Entry Form (Master Entity)**
-> What is the *main thing* the user creates?  
-🠖 This becomes your **primary table/entity**.
 
-Example:  
+> What is the _main thing_ the user creates?\
+> 🠖 This becomes your **primary table/entity**.
+
+Example:
+
 - Creating a "Product"? → `Product` is the main entity.
 
 ---
 
 ### 2. **One-to-Many (1:N): Child Needs Foreign Key**
-> If you add *multiple things* **under** the main form (like tags, comments, or bookings),  
-then the **child holds the foreign key**.
 
-**Rule:**  
+> If you add _multiple things_ **under** the main form (like tags, comments, or bookings),\
+> then the **child holds the foreign key**.
+
+**Rule:**\
 🔁 _"Many points to one — the many-side gets the FK."_
 
 Example:
+
 ```csharp
 public class Comment
 {
     public int Id { get; set; }
     public string Text { get; set; }
 
-    public int ProductId { get; set; } // FK to Product
+    public int ProductId { get; set; } // FK to Product since comment is a child
     public Product Product { get; set; } = null!;
 }
 ```
@@ -797,12 +802,14 @@ public class Comment
 ---
 
 ### 3. **One-to-One (1:1): Either Side Gets the FK, Prefer Dependent**
+
 > Used when you split detailed data into a second table (e.g. `UserDetails`, `VideoGameDetails`).
 
-**Tip:**  
+**Tip:**\
 Put the FK on the **dependent** (the one that wouldn't exist without the parent).
 
 Example:
+
 ```csharp
 public class VideoGameDetails
 {
@@ -817,6 +824,7 @@ public class VideoGameDetails
 ---
 
 ### 4. **Many-to-Many (N:N): Needs a Join Table**
+
 > For multiselects or tagging — like Products with multiple Categories.
 
 You need a **middle table** that holds 2 foreign keys.
@@ -836,19 +844,19 @@ public class ProductCategory
 
 ## 💡 UI-Based Thinking = Smarter Modeling
 
-| UI Element                          | ERM Pattern      | FK Location             |
-|------------------------------------|------------------|-------------------------|
-| Single dropdown                    | 1:N              | In main entity          |
-| List of items under main record    | 1:N              | In child entity         |
-| Detail page/tab with extra fields  | 1:1              | In dependent detail     |
-| Multiselect (e.g. categories/tags) | N:N              | In join table           |
+| UI Element                         | ERM Pattern | FK Location         |
+| ---------------------------------- | ----------- | ------------------- |
+| Single dropdown                    | 1:N         | In main entity      |
+| List of items under main record    | 1:N         | In child entity     |
+| Detail page/tab with extra fields  | 1:1         | In dependent detail |
+| Multiselect (e.g. categories/tags) | N:N         | In join table       |
 
 ---
 
 ## ✅ Final Checklist
 
-- [ ] Start from user workflows / forms
-- [ ] For each “added element” → ask “does this exist without the parent?”
-- [ ] Normalize repetitive data into lookup/reference tables
-- [ ] Avoid putting collections on both sides unless needed
-- [ ] Always define clear PK/FK logic
+- Start from user workflows / forms
+- For each “added element” → ask “does this exist without the parent?”
+- Normalize repetitive data into lookup/reference tables
+- Avoid putting collections on both sides unless needed
+- Always define clear PK/FK logic
