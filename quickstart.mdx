@@ -689,6 +689,28 @@ description: "Start building awesome an Awesome CRUD App in Blazor!"
   </Step>
   <Step title="Validations">
     ![image.png](/images/image.png)
+
+    ```cs Game.razor
+    @using Blazored.FluentValidation
+    @using FluentValidation
+    @inject IValidator<VideoGame> VideoGameValidator
+    
+    //Inside EditForm
+    
+    
+              <FluentValidationValidator />
+    
+            <ValidationSummary />
+    ```
+
+    inside the Game.razor
+
+    Create this Folder
+
+    ![image.png](/images/image.png)
+  </Step>
+  <Step title="New Step">
+    
   </Step>
 </Steps>
 
