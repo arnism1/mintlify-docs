@@ -1214,3 +1214,77 @@ public class UserService : IUserService
 
     }
 ```
+
+# Testplan
+# ✅ Testplan – Beispielvorlage
+
+## 🗂️ 1. Ziel des Tests
+Beschreibt das Ziel des Tests (z. B. Sicherstellen, dass die Registrierung eines Benutzers korrekt funktioniert).
+
+> **Beispiel:** Überprüfung der Benutzerregistrierung mit gültigen und ungültigen Eingaben.
+
+---
+
+## 🧪 2. Testumgebung
+
+| Komponente         | Version/Details           |
+|--------------------|---------------------------|
+| Betriebssystem     | Windows 11                |
+| .NET Version       | .NET 8                    |
+| Browser            | Chrome 123 / Firefox 118  |
+| Datenbank          | SQL Server 2022           |
+| Anwendungstyp      | Blazor Server             |
+
+---
+
+## 🧾 3. Testdaten
+
+| Testfall-ID | Eingabe                        | Erwartete Ausgabe                      |
+|-------------|--------------------------------|----------------------------------------|
+| TST001      | Gültige E-Mail, Passwort       | Registrierung erfolgreich              |
+| TST002      | Ungültige E-Mail               | Fehlermeldung "ungültige E-Mail"       |
+| TST003      | Leeres Passwort                | Fehlermeldung "Pflichtfeld"            |
+| TST004      | Existierende E-Mail-Adresse    | Fehlermeldung "Benutzer existiert"     |
+
+---
+
+## 📋 4. Ablaufplan des Tests
+
+1. Anwendung starten
+2. Navigiere zur Registrierungsseite (`/register`)
+3. Formular mit Testdaten ausfüllen
+4. Auf "Registrieren" klicken
+5. Ergebnis mit Erwartung abgleichen
+6. Ergebnis im Bericht dokumentieren
+
+---
+
+## 📄 5. Testbericht
+
+| Testfall-ID | Getestete Funktion         | Ergebnis | Bemerkung                      |
+|-------------|----------------------------|----------|-------------------------------|
+| TST001      | Registrierung              | ✅ Pass  | Alles korrekt                  |
+| TST002      | E-Mail-Validierung         | ✅ Pass  | Fehler korrekt angezeigt       |
+| TST003      | Pflichtfeldprüfung         | ✅ Pass  | Validierung funktioniert       |
+| TST004      | Prüfung auf Duplikate      | ❌ Fail  | Kein Fehler, Registrierung erlaubt |
+
+---
+
+## 📝 6. Zusammenfassung
+
+- **Bestandene Tests:** 3 von 4
+- **Fehlgeschlagene Tests:** 1
+- **Empfehlung:** Fehlerbehebung bei Prüfung auf bereits registrierte E-Mails
+
+---
+
+## 🧩 7. Hinweis zum Datenmodell
+
+Um die getesteten Funktionen klar zuzuordnen, sollte ein **Diagramm der Datenbankbeziehungen (ERD)** erstellt werden.
+
+> Beispielhafte Relationen:
+> - `User` 1:N `UserLogins`
+> - `User` N:M `Roles` über `UserRoles`
+> - `User` 1:N `Registrations`
+
+Ein solches Diagramm hilft, die Abhängigkeiten und Datenflüsse im Testprozess zu verstehen.
