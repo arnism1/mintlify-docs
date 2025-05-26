@@ -1,0 +1,298 @@
+---
+title: "Product Sample (CRUD BLAZOR)"
+description: "Description of your new file."
+---
+
+```razor
+
+
+@page "/product"
+@page "/product/{id:int?}"
+
+@rendermode InteractiveServer
+
+@using Blazored.FluentValidation
+@using FluentValidation
+@using Nigeria.Services
+@using ZeitManagment.Models.Category
+
+@inject IProductService ProductService
+@inject NavigationManager NavigationManager
+
+@inject IValidator<Product> ProductValidator
+
+<h3>Create Product</h3>
+
+@* Always check to prevent NULLreference Exception *@
+@if (product == null)
+{
+    <p><em>Loading products</em></p>
+}
+else
+{
+    <p>@(id != 0 ? "Editing existing product" : "Creating new product")</p>
+
+    //Formname is extremly important:
+    <EditForm Model="product" OnValidSubmit="HandleValidSubmit" FormName="CreateProductForm">
+
+        <FluentValidationValidator />
+
+        <ValidationSummary />
+
+        <div class="form-group mb-3">
+            <label for="productName">Product Name:</label>
+            <InputText id="productName" class="form-control" @bind-Value="product.Name" placeholder="Enter product name" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="startdate">Start Date</label>
+            <InputDate id="startdate" class="form-control" @bind-Value="product.StartDate" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="enddate">End Date</label>
+            <InputDate id="enddate" class="form-control" @bind-Value="product.EndDate" />
+        </div>
+
+        @if (categories != null)
+        {
+            <div class="form-group mb-3">
+                <label for="categorySelect">Category:</label>
+                <InputSelect id="categorySelect" class="form-control" @bind-Value="product.CategoryId">
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </InputSelect>
+            </div>
+        }
+
+        <div class="form-group mb-3">
+            <label>Tags</label>
+            <button type="button" class="btn btn-secondary mb-2" @onclick="AddTagToProduct">
+                <i class="bi bi-plus"></i> Add Tag
+            </button>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tag</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var productTag in product.ProductTags)
+                    {
+                        <tr>
+                            <td>
+                                <InputSelect class="form-control" @bind-Value="productTag.TagId">
+@*                                      <option value="">Select a tag...</option>*@
+                                    @foreach (var tag in tags)
+                                    {
+                                        <option value="@tag.Id">@tag.Name</option>
+                                    }
+                                </InputSelect>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveTag(productTag)">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+
+    </EditForm>
+}
+
+@code {
+
+    #region Tag
+
+    private List<Tag> tags = new();
+    private int? selectedTagId;
+
+    private void AddTagToProduct()
+    {
+        product.ProductTags.Add(new ProductTag());
+    }
+
+    private void RemoveTag(ProductTag productTag)
+    {
+        product.ProductTags.Remove(productTag);
+    }
+
+    #endregion
+
+
+
+    [Parameter]
+    public int id { get; set; }
+
+    private bool isEditMode => id != 0;
+
+    private Product product = new()
+    {
+        Name = string.Empty,
+        StartDate = DateTime.Today,
+        EndDate = DateTime.Today.AddYears(1)
+    };
+
+    private List<Category> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await ProductService.ListCategoriesAsync();
+        tags = await ProductService.ListTagsAsync();
+
+        if (categories.Any())
+        {
+            product.CategoryId = categories.First().Id;
+        }
+
+        if (isEditMode)
+        {
+            var loaded = await ProductService.GetProductByIdAsync(id);
+            if (loaded != null)
+            {
+                product = loaded;
+            }
+        }
+    }
+
+
+    private async Task HandleValidSubmit()
+    {
+        // Remove any ProductTags that don't have a TagId selected
+        product.ProductTags = product.ProductTags
+            .Where(pt => pt.TagId != 0)
+            .ToList();
+
+        if (isEditMode)
+        {
+            await ProductService.UpdateProductAsync(product);
+        }
+        else
+        {
+            await ProductService.AddProductAsync(product);
+        }
+
+        NavigationManager.NavigateTo("/products");
+    }
+}
+```
+
+ProductValidator
+
+```csharp
+using FluentValidation;
+using ZeitManagment.Models.Category;
+
+namespace Nigeria.Validations
+{
+    public class ProductValidator : AbstractValidator<Product>
+    {
+        public ProductValidator()
+        {
+            RuleFor(p => p.Name)
+                .NotEmpty().WithMessage("Product name is required")
+                .MaximumLength(100).WithMessage("Product name cannot exceed 100 characters");
+
+            RuleFor(p => p.CategoryId)
+                .NotEqual(0).WithMessage("Please select a category");
+
+            RuleFor(p => p.StartDate)
+                .NotEmpty().WithMessage("Start date is required")
+                .LessThan(p => p.EndDate).WithMessage("Start date must be before end date");
+
+            RuleFor(p => p.EndDate)
+                .NotEmpty().WithMessage("End date is required")
+                .GreaterThan(p => p.StartDate).WithMessage("End date must be after start date");
+
+            RuleFor(p => p.ProductTags)
+                .NotEmpty().WithMessage("At least one tag must be selected")
+                .Must(tags => tags.Count <= 5).WithMessage("Maximum of 5 tags allowed")
+                .Must(tags => tags.Select(pt => pt.TagId).Distinct().Count() == tags.Count)
+                .WithMessage("Duplicate tags are not allowed");
+
+            #region Name
+
+            RuleFor(p => p.Name)
+                .NotEmpty().WithMessage("Bitte Namen angeben");
+
+            RuleFor(p => p.Name)
+                .MaximumLength(10).WithMessage("Bitte nicht zu lang");
+
+            RuleFor(p => p.Name)
+                .MinimumLength(2).WithMessage("Bitte nicht zu kurz");
+
+            RuleFor(p => p.Name)
+                .Must(name => !string.Equals(name, "product", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("Der Name 'product' ist nicht erlaubt.");
+
+            //other Examples:
+
+            var verboten = new[] { "hurensohn", "idiot", "nuttensohn" };
+
+            RuleFor(p => p.Name)
+                .Must(name => !verboten.Any(wort =>
+                    name != null &&
+                    name.IndexOf(wort, StringComparison.OrdinalIgnoreCase) >= 0))
+                .WithMessage("Der Name enthält unzulässige Wörter.");
+
+            //Splitting:
+                RuleFor(p => p.Name)
+            .Must(name =>
+            {
+                var worte = name?.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                return !worte.Intersect(verboten).Any();
+            })
+            .WithMessage("Der Name darf keine unzulässigen Wörter enthalten.");
+
+            #endregion
+
+            #region Dates
+
+            RuleFor(x => x.StartDate)
+                .LessThan(x => x.EndDate)
+                .WithMessage("Startdatum muss vor dem Enddatum liegen.");
+
+            RuleFor(x => x)
+                .Must(x => x.StartDate < x.EndDate)
+                .WithMessage("Startdatum muss vor dem Enddatum liegen (nicht gleich).");
+
+            RuleFor(x => x.StartDate)
+                .NotEqual(new DateTime(2000, 1, 1))
+                .WithMessage("Der 1. Januar 2000 ist nicht erlaubt.");
+
+
+            RuleFor(x => x.StartDate)
+                .GreaterThanOrEqualTo(new DateTime(2000, 1, 2))
+                .WithMessage("Startdatum darf nicht vor dem 2. Januar 2000 liegen.");
+
+            RuleFor(x => x.EndDate)
+                .LessThanOrEqualTo(new DateTime(2053, 12, 31))
+                .WithMessage("Enddatum darf nicht nach dem 31. Dezember 2053 liegen. Da gibts unsere Firma nicht mehr lol ");
+
+            var feiertage = new[]
+            {
+                new DateTime(2000, 1, 1),
+                new DateTime(2025, 12, 24),
+                new DateTime(2025, 12, 31)
+            };
+
+            RuleFor(x => x.StartDate)
+                .Must(datum => !feiertage.Contains(datum.Date))
+                .WithMessage("zu Feiertagen ist es nicht erlaubt ");
+
+            #endregion
+        }
+    }
+}
+```
